@@ -65,25 +65,31 @@
         [RotationDesc(ActionID.AfflatusSolace, ActionID.Regen, ActionID.Cure2, ActionID.Cure)]
         protected override bool HealSingleGCD(out IAction act)
         {
-            return (AfflatusSolace.CanUse(out act)) ||
-                    (Regen.CanUse(out act) && Regen.Target.GetHealthRatio() < 0.7) ||
-                    Cure2.CanUse(out act) ||
-                    Cure.CanUse(out act) ||
-                    base.HealSingleGCD(out act);
+            int membersWithMedica2 = PartyMembers.Count(n => n.HasStatus(true, StatusID.Medica2));
+            float targetHealthRatio = Regen.Target.GetHealthRatio();
+
+            return (Regen.CanUse(out act) && targetHealthRatio < 0.7 && membersWithMedica2 == 0) || 
+                   (AfflatusSolace.CanUse(out act) || 
+                   Cure2.CanUse(out act) || 
+                   Cure.CanUse(out act) || 
+                   base.HealSingleGCD(out act));
         }
+
 
         [RotationDesc(ActionID.AfflatusRapture, ActionID.Medica2, ActionID.Cure3, ActionID.Medica)]
         protected override bool HealAreaGCD(out IAction act)
         {
             int membersNeedingHeal = PartyMembers.Count(m => m.GetHealthRatio() < 0.7);
-            int membersWithMedica2 = PartyMembers.Count(n => n.HasStatus(true, StatusID.Medica2));
+            bool useLilyWhenFull = Configs.GetBool("UseLilyWhenFull");
 
-            return (membersNeedingHeal >= 2 &&
-                    Medica2.CanUse(out act) &&
-                    membersWithMedica2 < PartyMembers.Count()) || (Cure3.CanUse(out act) || Medica.CanUse(out act) || base.HealAreaGCD(out act));
+            return (useLilyWhenFull && ((Lily >= 2 && LilyAfter(17)) || (Lily == 3 && BloodLily < 3)) && membersNeedingHeal >= 2)
+                ? AfflatusRapture.CanUse(out act)
+                : (membersNeedingHeal >= 2)
+                    ? Medica2.CanUse(out act)
+                    : (membersNeedingHeal >= 3)
+                        ? Cure3.CanUse(out act)
+                        : Medica.CanUse(out act) || base.HealAreaGCD(out act);
         }
-
-
         #endregion
 
         #region oGCD Logic
