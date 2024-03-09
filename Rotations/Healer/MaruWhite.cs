@@ -1,6 +1,6 @@
 ﻿namespace MaruRotations.Rotations.Healer
 {
-    [SourceCode(Path = "main/DefaultRotations/Healer/MaruWhite.cs")]
+    [SourceCode(Path = "main/MaruRotations/Healer/MaruWhite.cs")]
     public sealed class MaruWhite : WHM_Base
     {
 

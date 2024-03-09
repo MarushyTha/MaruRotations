@@ -1,15 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-    <PropertyGroup>
-        <TargetFramework>net7.0-windows</TargetFramework>
-        <ImplicitUsings>enable</ImplicitUsings>
-        <Authors>MarushyTha</Authors>
-        <Version>1.0.0.0</Version>
-        <PlatformTarget>x64</PlatformTarget>
-        <Platforms>AnyCPU</Platforms>
-
-        <DalamudLibPath>$(AppData)\XIVLauncher\addon\Hooks\dev\</DalamudLibPath>
-    </PropertyGroup>
+		<PropertyGroup>
+			<TargetFramework>net7.0-windows</TargetFramework>
+			<ImplicitUsings>enable</ImplicitUsings>
+			<Authors>MarushyTha</Authors>
+			<Version>1.0.0.0</Version>
+			<PlatformTarget>x64</PlatformTarget>
+			<Platforms>x64</Platforms>
+		<DalamudLibPath>$(AppData)\XIVLauncher\addon\Hooks\dev\</DalamudLibPath>
+		</PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
         <NoWarn>S101;</NoWarn>
@@ -20,6 +19,12 @@
         <NoWarn>S101;</NoWarn>
         <DebugType>full</DebugType>
     </PropertyGroup>
+
+    <ItemGroup>
+      <Compile Remove="RotationSolver\**" />
+      <EmbeddedResource Remove="RotationSolver\**" />
+      <None Remove="RotationSolver\**" />
+    </ItemGroup>
 
     <!-- Add package reference to RotationSolver.Basic -->
 
@@ -56,29 +61,35 @@
     </ItemGroup>
 
     <ItemGroup>
-        <Using Include="MaruRotations.Rotations.RotationInfo">
+        <Using Include="MaruRotations.RotationInfo">
           <Static>True</Static>
         </Using>
-        <Using Include="Dalamud.Game.ClientState.JobGauge.Enums" />
-        <Using Include="Dalamud.Game.ClientState.Objects.Types" />
-        <Using Include="Dalamud.Interface" />
-        <Using Include="RotationSolver.Basic.Rotations.Basic" />
-        <Using Include="ImGuiNET" />
-        <Using Include="Newtonsoft.Json" />
-        <Using Include="RotationSolver.Basic" />
-        <Using Include="RotationSolver.Basic.Actions" />
-        <Using Include="RotationSolver.Basic.Attributes" />
-        <Using Include="RotationSolver.Basic.Configuration.RotationConfig" />
-        <Using Include="RotationSolver.Basic.Data" />
-        <Using Include="RotationSolver.Basic.Helpers" />
-        <Using Include="RotationSolver.Basic.Rotations" />
-        <Using Include="System.Numerics" />
-        <Using Include="System.Reflection" />
-    </ItemGroup>
+		<Using Include="Dalamud.Game.ClientState.JobGauge.Enums" />
+		<Using Include="Dalamud.Game.ClientState.Objects.Types" />
+		<Using Include="Dalamud.Interface" />
+		<Using Include="RotationSolver.Basic.Rotations.Basic" />
+		<Using Include="ImGuiNET" />
+		<Using Include="Newtonsoft.Json" />
+		<Using Include="RotationSolver.Basic" />
+		<Using Include="RotationSolver.Basic.Actions" />
+		<Using Include="RotationSolver.Basic.Attributes" />
+		<Using Include="RotationSolver.Basic.Configuration.RotationConfig" />
+		<Using Include="RotationSolver.Basic.Data" />
+		<Using Include="RotationSolver.Basic.Helpers" />
+		<Using Include="RotationSolver.Basic.Rotations" />
+		<Using Include="System.Numerics" />
+		<Using Include="System.Reflection" />
+	</ItemGroup>
 
     <ItemGroup>
       <Folder Include="Rotations\Healer\" />
       <Folder Include="Rotations\Tank\" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="RotationSolver\ECommons\ECommons\ECommons.csproj" />
+      <ProjectReference Include="RotationSolver\RotationSolver.Basic\RotationSolver.Basic.csproj" />
+      <ProjectReference Include="RotationSolver\XIVPainter\XIVPainter\XIVPainter.csproj" />
     </ItemGroup>
 
 </Project>
