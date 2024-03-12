@@ -162,10 +162,27 @@
 
 
         [RotationDesc(ActionID.Temperance, ActionID.LiturgyOfTheBell)]
-        protected override bool DefenseAreaAbility(out IAction act) =>
-            Temperance.CanUse(out act) ||
-            LiturgyOfTheBell.CanUse(out act) ||
-            base.DefenseAreaAbility(out act);
+        protected override bool DefenseAreaAbility(out IAction act)
+        {
+            if (IsInHighEndDuty && Temperance.CanUse(out act) && LiturgyOfTheBell.CanUse(out _))
+            {
+                // Prioritize Temperance in high-end duties
+                act = Temperance;
+                return true;
+            }
+            else if (Temperance.CanUse(out act))
+            {
+                // Prioritize Temperance outside of high-end duties (or if Liturgy is not available)
+                return true;
+            }
+            else if (LiturgyOfTheBell.CanUse(out act))
+            {
+                return true;
+            }
+
+            // Fallback to other defensive area abilities
+            return base.DefenseAreaAbility(out act);
+        }
 
 
         protected override bool EmergencyAbility(IAction nextGCD, out IAction act) =>
