@@ -42,6 +42,8 @@
                                              regenCount < 2);
             }
         };
+
+
         #endregion
 
         #region Countdown logic
@@ -62,23 +64,19 @@
         {
             bool useLilyWhenFull = Configs.GetBool("UseLilyWhenFull");
 
-            if (PartyMembersHP.Any(health => health < 0.4) && Holy.CanUse(out act))
-            {
-                return true;
-            }
-
             if (PartyMembersHP.Count(health => health < 0.7) >= 3 && Medica2.CanUse(out act))
             {
                 return true;
             }
 
             return (InCombat && RegenDefense.CanUse(out act)) ||
-                   AfflatusMisery.CanUse(out act, CanUseOption.MustUse) ||
-                   (useLilyWhenFull && ((Lily == 2 && LilyAfter(17)) || (Lily == 3 && BloodLily < 3)) &&
-                    AfflatusMisery.EnoughLevel &&
-                    ((PartyMembersAverHP < 0.7 && AfflatusRapture.CanUse(out act)) ||
-                     AfflatusSolace.CanUse(out act))) ||
-                   (NumberOfAllHostilesInRange >= Configs.GetInt("HolyHostileThreshold") && Holy.CanUse(out act)) ||
+                    AfflatusMisery.CanUse(out act, CanUseOption.MustUse) ||
+                        (useLilyWhenFull && ((Lily == 2 && LilyAfter(17)) || 
+                            (Lily == 3 && BloodLily < 3)) &&
+                             AfflatusMisery.EnoughLevel &&
+                             ((PartyMembersAverHP < 0.7 && AfflatusRapture.CanUse(out act)) ||
+                                AfflatusSolace.CanUse(out act))) ||
+                                 (NumberOfAllHostilesInRange >= Configs.GetInt("HolyHostileThreshold") && Holy.CanUse(out act)) ||
                    Aero.CanUse(out act) ||
                    Stone.CanUse(out act) ||
                    Aero.CanUse(out act, CanUseOption.MustUse) ||
@@ -118,7 +116,8 @@
                 return true;
             }
             // Use Afflatus Rapture when lilies are available and two or more party members need healing
-            else if (useLilyWhenFull && ((Lily >= 2 && LilyAfter(17)) || (Lily == 3 && BloodLily < 3)) &&  AfflatusRapture.CanUse(out act))
+            else if (useLilyWhenFull && ((Lily >= 2 && LilyAfter(17)) ||
+                        (Lily == 3 && BloodLily < 3)) &&  AfflatusRapture.CanUse(out act))
             {
                 return true;
             }
@@ -126,7 +125,8 @@
             {
                 // Fall back to other healing abilities when conditions for Medica2 are not met
                 return  Cure3.CanUse(out act) ||
-                            Medica.CanUse(out act) || base.HealAreaGCD(out act);
+                            Medica.CanUse(out act) ||
+                                base.HealAreaGCD(out act);
             }
         }
 
@@ -135,7 +135,7 @@
         #region oGCD Logic
         protected override bool AttackAbility(out IAction act) =>
             PresenceOfMind.CanUse(out act) ||
-            Assize.CanUse(out act, CanUseOption.MustUse) ||
+            (HasHostilesInMaxRange && Assize.CanUse(out act, CanUseOption.MustUse)) ||
             base.AttackAbility(out act);
 
 
