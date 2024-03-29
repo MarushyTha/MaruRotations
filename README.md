@@ -1,16 +1,18 @@
-Experimenting with rotations for Rotation Solver Plugin
+Experimenting with rotations for Rotation Solver Reborn Plugin
 
 # MaruRotations
 ***
 **For [FFXIV Launcher](https://goatcorp.github.io/)**
 
-**Plugin [Rotation Solver](https://github.com/Jaksuhn/RotationSolver)**
+**Plugin [Rotation Solver](https://github.com/FFXIV-CombatReborn/RotationSolverReborn)**
 
-My rotations are based in **[LTS](https://github.com/LTS-FFXIV/LTSDefaults)** from Rotation Solver
+My rotations are based in **[LTS](https://github.com/FFXIV-CombatReborn/LTSDefaults)** from Rotation Solver
 
 |  | Class | Description |
 | --- | --- | --- |
 |![WHM Icon](https://lds-img.finalfantasyxiv.com/promo/h/G/Na619RGtVtbEvNn1vyFoSlvZ84.png)  |   **White Mage**  |Humanized Regen - Holy and Asylum Settings - Good DPS and Healing **[Tentative]** |
+
+|  |**Coming Soon**|  |
 |![AST Icon](https://lds-img.finalfantasyxiv.com/promo/h/E/g7JY4S1D-9S26VarEuIkPGIrFM.png)  |   **Astrologian**  |Humanized Aspected Benefic - Good DPS and Healing **[Tentative]** |
 |![SGE Icon](https://lds-img.finalfantasyxiv.com/promo/h/e/G0lQTD01LdCGk5pECSc7fbbmbM.png)  |   **Sage**  | Good DPS and Healing **[Tentative]** |
 |![SCH Icon](https://lds-img.finalfantasyxiv.com/promo/h/s/2r8fm3U0Io7Pw1XT1tvnjPthp4.png)  |   **Scholar**  |Good DPS and Healing **[Tentative]** |
