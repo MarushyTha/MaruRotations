@@ -1,196 +1,303 @@
-﻿namespace MaruRotations.Rotations.Healer
+﻿using System;
+
+namespace MaruRotations.Rotations.Healer
 {
-    [SourceCode(Path = "main/MaruRotations/Healer/MaruWhite.cs")]
-    public sealed class MaruWhite : WHM_Base
+    [Rotation("MaruRotations", CombatType.PvE, GameVersion = "6.58")]
+    [SourceCode(Path = "main/MaruRotations/Rotations/Healer/MaruWhite.cs")]
+    public sealed class MaruWhite : WhiteMageRotation
     {
-
-        #region General rotation info
-        public override string GameVersion => VERSION;
-        public override string RotationName => $"MaruWhite [{Type}]";
-        public override CombatType Type => CombatType.PvE;
-        #endregion General rotation info
-
         #region Configuration
-        protected override IRotationConfigSet CreateConfiguration()
-        {
-            return base.CreateConfiguration()
-                .SetBool(CombatType.PvE, "UseLilyWhenFull", true, "Use Lily at max stacks.")
-                .SetBool(CombatType.PvE, "UsePreRegen", false, "Regen on Tank at 5 seconds remaining on Countdown.")
-                .SetInt(CombatType.PvE, "AsylumThreshold", 2, "At how many hostiles should Asylum be used", 1, 20)
-                .SetInt(CombatType.PvE, "HolyHostileThreshold", 3, "At how many hostiles should Holy be used", 1, 20);
-        }
+
+        [RotationConfig(CombatType.PvE, Name = "Use Lily at max stacks.")]
+        public bool UseLilyWhenFull { get; set; } = true;
+
+        [RotationConfig(CombatType.PvE, Name = "Regen on Tank at 5 seconds remaining on Countdown.")]
+        public bool UsePreRegen { get; set; } = true;
+
+        [RotationConfig(CombatType.PvE, Name = "At how many hostiles should Asylum be used.")]
+        public int AsylumThreshold { get; set; } = 2;
+
+        [RotationConfig(CombatType.PvE, Name = "At how many hostiles should Holy be used.")]
+        public int HolyHostileThreshold { get; set; } = 3;
+
         #endregion
 
         #region Hooks
 
-        public static IBaseAction RegenDefense { get; } = new BaseAction(ActionID.Regen, ActionOption.Hot)
+        public MaruWhite()
         {
-            ChoiceTarget = TargetFilter.FindAttackedTarget, 
-            TargetStatus = Regen.TargetStatus,
-            ActionCheck = (b, m) =>
-            {
+            AfflatusRapturePvE.Setting.RotationCheck = () => BloodLily < 3 && UseLilyWhenFull;
+            AfflatusSolacePvE.Setting.RotationCheck = () => BloodLily < 3 && UseLilyWhenFull;
+            AsylumPvE.Setting.RotationCheck = () => AsylumThreshold > 0;
+            HolyPvE.Setting.RotationCheck = () => HolyHostileThreshold > 0;
+        }
 
-                int regenCount = PartyMembers.Count(m => m.HasStatus(true, StatusID.Regen1));
+        #endregion
 
-                if (b.IsJobCategory(JobRole.Tank) && b.GetHealthRatio() < 0.8)
-                {
-                    return true; // Prioritize tank 
-                }
+        #region Helpers
 
-                return PartyMembers.Any(m => !m.IsJobCategory(JobRole.Tank) &&
-                                             m.GetHealthRatio() < 0.8 &&
-                                             regenCount < 2);
-            }
-        };
+        // Method to determine whether to use Lily ability
+        private bool UseLily(out IAction? act, bool useAoE)
+        {
 
+            // Use Lily based on AoE flag
+            if (useAoE && AfflatusRapturePvE.CanUse(out act, skipAoeCheck: true))
+                return true;
+            else if (AfflatusSolacePvE.CanUse(out act))
+                return true;
+
+            // If no Lily ability is usable, assign a default null value
+            act = null;
+            return false;
+        }
+
+        // Method to determine whether to use Holy ability
+        private bool UseHoly(out IAction? act)
+        {
+            // Check if Holy can be used and if enough hostiles are present
+            bool canUseHoly = HolyPvE.CanUse(out act);
+            bool shouldUseHoly = NumberOfAllHostilesInRange >= HolyHostileThreshold && canUseHoly;
+            return shouldUseHoly;
+        }
 
         #endregion
 
         #region Countdown logic
-        protected override IAction CountDownAction(float remainTime)
+
+        // Override method for countdown actions
+        protected override IAction? CountDownAction(float remainTime)
         {
-            return (remainTime < Stone.CastTime + CountDownAhead && Stone.CanUse(out var act)) ||
-                   (Configs.GetBool("UsePreRegen") && remainTime <= 5 && remainTime > 3 &&
-                    (RegenDefense.CanUse(out act, CanUseOption.IgnoreClippingCheck) ||
-                     DivineBenison.CanUse(out act, CanUseOption.IgnoreClippingCheck))) ? act :
-                   base.CountDownAction(remainTime);
+            IAction? act;
+
+            // If the remaining time is less than the cast time of Stone plus the countdown ahead time
+            if (remainTime < StonePvE.Info.CastTime + CountDownAhead)
+            {
+                // Try to use Stone if it can be used
+                if (StonePvE.CanUse(out act))
+                    return act;
+            }
+
+            // If using pre-regen is enabled and there are 5 seconds or less remaining
+            if (UsePreRegen && remainTime <= 5 && remainTime > 3)
+            {
+                // Try to use Regen or Divine Benison if they can be used
+                if (RegenPvE.CanUse(out act))
+                    return act;
+                if (DivineBenisonPvE.CanUse(out act))
+                    return act;
+            }
+
+            return base.CountDownAction(remainTime);
         }
 
         #endregion
 
         #region GCD Logic
 
-        protected override bool GeneralGCD(out IAction act)
+        // Override method for general GCD actions
+        protected override bool GeneralGCD(out IAction? act)
         {
-            bool useLilyWhenFull = Configs.GetBool("UseLilyWhenFull");
-
-            if (PartyMembersHP.Count(health => health < 0.7) >= 3 && Medica2.CanUse(out act))
-            {
+            // Check if Afflatus Misery can be used and use it if possible
+            if (AfflatusMiseryPvE.CanUse(out act, skipAoeCheck: true))
                 return true;
+
+            // Check if Lily conditions are met
+            bool liliesNearlyFull = Lily == 2 && LilyTime > 13;
+            bool liliesFullNoBlood = Lily == 3 && BloodLily < 3;
+
+            if (UseLilyWhenFull && ((liliesNearlyFull || liliesFullNoBlood) && NumberOfAllHostilesInRange >= 2 || HostileTarget.IsBossFromIcon() && AfflatusMiseryPvE.EnoughLevel && BloodLily < 3))
+            {
+                // Prioritize single-target Lily usage (Afflatus Solace)
+                if (UseLily(out act, false))
+                    return true;
+
+                // AoE Logic (including bosses)
+                if (NumberOfAllHostilesInRange >= 2 || HostileTarget.IsBossFromIcon())
+                {
+                    if (UseLily(out act, true))
+                        return true;
+                }
+
+                // Check if 3 or more party members have health below 70% and Medica II can be used
+                if (PartyMembersHP.Count(health => health < 0.7) >= 3 && MedicaIiPvE.CanUse(out act))
+                {
+                    return true; // Use Medica II if conditions are met
+                }
+
+                // Prioritize healing with Cure II if party health is low
+                if (PartyMembersAverHP < 0.7 && CureIiPvE.CanUse(out act))
+                    return true;
+
+                // Check for single-target Lily usage (Afflatus Solace)
+                if (UseLily(out act, false))
+                    return true;
             }
 
-            return (InCombat && RegenDefense.CanUse(out act)) ||
-                    AfflatusMisery.CanUse(out act, CanUseOption.MustUse) ||
-                        (useLilyWhenFull && ((Lily == 2 && LilyAfter(17)) || 
-                            (Lily == 3 && BloodLily < 3)) &&
-                             AfflatusMisery.EnoughLevel &&
-                             ((PartyMembersAverHP < 0.7 && AfflatusRapture.CanUse(out act)) ||
-                                AfflatusSolace.CanUse(out act))) ||
-                                 (NumberOfAllHostilesInRange >= Configs.GetInt("HolyHostileThreshold") && Holy.CanUse(out act)) ||
-                   Aero.CanUse(out act) ||
-                   Stone.CanUse(out act) ||
-                   Aero.CanUse(out act, CanUseOption.MustUse) ||
-                   base.GeneralGCD(out act);
+            // AoE damage (Holy)
+            if (HolyPvE.CanUse(out _))
+            {
+                if (UseHoly(out act))
+                    return true;
+            }
+
+            // Single-target DoT (Aero)
+            if (AeroPvE.CanUse(out act))
+                return true;
+
+            // Single-target damage (Stone)
+            if (StonePvE.CanUse(out act))
+                return true;
+
+            // Maintain DoT (Aero) even if already applied 
+            if (AeroPvE.CanUse(out act, skipStatusProvideCheck: true))
+                return true;
+
+            // If no action is taken, call the base method
+            return base.GeneralGCD(out act);
         }
 
-
-        [RotationDesc(ActionID.AfflatusSolace, ActionID.Cure2, ActionID.Regen, ActionID.Cure)]
-        protected override bool HealSingleGCD(out IAction act)
+        [RotationDesc(ActionID.AfflatusSolacePvE, ActionID.CureIiPvE, ActionID.RegenPvE, ActionID.CurePvE)]
+        protected override bool HealSingleGCD(out IAction? act)
         {
-            float targetHealthRatio = Regen.Target.GetHealthRatio();
+            float targetHealthRatio = (float)(RegenPvE.Target.Target?.GetHealthRatio());
 
-            // Use Regen only if no other party member has Medica2 and the target's health is below 70%
-            if (Regen.CanUse(out act) && targetHealthRatio < 0.7)
+            // Prioritize Regen if conditions are met
+            if (RegenPvE.CanUse(out act) && targetHealthRatio < 0.7)
             {
                 return true;
             }
 
-            // Otherwise, prioritize other healing abilities
-            return AfflatusSolace.CanUse(out act) ||
-                   Cure2.CanUse(out act) ||
-                   Cure.CanUse(out act) ||
+            // Prioritize other healing abilities 
+            return AfflatusSolacePvE.CanUse(out act) ||
+                   CureIiPvE.CanUse(out act) ||
+                   CurePvE.CanUse(out act) ||
                    base.HealSingleGCD(out act);
         }
 
-
-        [RotationDesc(ActionID.AfflatusRapture, ActionID.Medica2, ActionID.Cure3, ActionID.Medica)]
-        protected override bool HealAreaGCD(out IAction act)
+        [RotationDesc(ActionID.AfflatusRapturePvE, ActionID.MedicaIiPvE, ActionID.CureIiiPvE, ActionID.MedicaPvE)]
+        protected override bool HealAreaGCD(out IAction? act)
         {
-            int hasMedica2 = PartyMembers.Count(n => n.HasStatus(true, StatusID.Medica2));
-            float averagePartyHP = PartyMembersAverHP / PartyMembers.Count();
-            bool useLilyWhenFull = Configs.GetBool("UseLilyWhenFull");
+            // Declare and initialize variables
+            bool liliesNearlyFull = Lily == 2 && LilyTime > 13;
+            bool liliesFullNoBlood = Lily == 3 && BloodLily < 3;
 
-            if ((averagePartyHP < 0.8 &&
-                hasMedica2 > PartyMembers.Count() / 2 && Medica2.CanUse(out act)))
+            // Calculate the average health of party members
+            float partyMembersAverageHealth = PartyMembersAverHP;
+
+            // Calculate the threshold for Medica II based on the number of party members
+            int medicaThreshold = PartyMembers.Count() / 2; // Dynamic threshold based on party size
+
+            // Check if Medica II can be used
+            bool canUseMedicaII = MedicaIiPvE.CanUse(out act, skipClippingCheck: true);
+
+            // Check if party health is below the threshold for Medica II
+            bool isPartyHealthBelowThreshold = partyMembersAverageHealth < 0.75f;
+
+            // Check if there are enough hostiles for Medica II
+            bool enoughHostilesForMedicaII = NumberOfAllHostilesInRange >= medicaThreshold;
+
+            // Check if there is a single hostile target (boss)
+            bool isSingleBossTarget = NumberOfAllHostilesInRange == 1 && HostileTarget.IsBossFromIcon();
+
+            // Use Medica II if:
+            // 1. Party health is below threshold and enough hostiles are present and Medica II is usable
+            // OR 2. We're fighting a boss (single target) and Medica II is usable
+            if ((isPartyHealthBelowThreshold && enoughHostilesForMedicaII || isSingleBossTarget) && canUseMedicaII)
             {
                 return true;
             }
-            // Use Afflatus Rapture when lilies are available and two or more party members need healing
-            else if (useLilyWhenFull && ((Lily >= 2 && LilyAfter(17)) ||
-                        (Lily == 3 && BloodLily < 3)) &&  AfflatusRapture.CanUse(out act))
+
+
+
+            // Check for AoE Lily usage
+            if ((liliesNearlyFull || liliesFullNoBlood) && UseLily(out act, true))
             {
                 return true;
             }
-            else
-            {
-                // Fall back to other healing abilities when conditions for Medica2 are not met
-                return  Cure3.CanUse(out act) ||
-                            Medica.CanUse(out act) ||
-                                base.HealAreaGCD(out act);
-            }
+
+            // If neither Medica II nor AoE Lily is usable, use other healing spells
+            return CureIiiPvE.CanUse(out act) ||
+                   MedicaPvE.CanUse(out act) ||
+                   base.HealAreaGCD(out act);
         }
 
         #endregion
 
         #region oGCD Logic
-        protected override bool AttackAbility(out IAction act) =>
-            PresenceOfMind.CanUse(out act) ||
-            (HasHostilesInMaxRange && Assize.CanUse(out act, CanUseOption.MustUse)) ||
+
+        [RotationDesc(ActionID.PresenceOfMindPvE, ActionID.AssizePvE)]
+        protected override bool AttackAbility(out IAction? act) =>
+            InCombat && (PresenceOfMindPvE.CanUse(out act) || (HasHostilesInMaxRange && AssizePvE.CanUse(out act, CanUseOption.SkipClippingCheck))) ||
             base.AttackAbility(out act);
 
-
-        [RotationDesc(ActionID.Benediction, ActionID.Asylum, ActionID.DivineBenison, ActionID.Tetragrammaton)]
-        protected override bool HealSingleAbility(out IAction act) =>
-            (Benediction.CanUse(out act) && Benediction.Target.GetHealthRatio() < 0.5) ||
-            (!IsMoving && NumberOfAllHostilesInRange >= Configs.GetInt("AsylumThreshold") && Asylum.CanUse(out act)) ||
-            DivineBenison.CanUse(out act) ||
-            Tetragrammaton.CanUse(out act) ||
+        [RotationDesc(ActionID.BenedictionPvE, ActionID.AsylumPvE, ActionID.DivineBenisonPvE, ActionID.TetragrammatonPvE)]
+        protected override bool HealSingleAbility(out IAction? act) =>
+            (BenedictionPvE.CanUse(out act) && BenedictionPvE.Target.Target?.GetHealthRatio() < 0.5d) ||
+            (!IsMoving && NumberOfAllHostilesInRange >= AsylumThreshold && AsylumPvE.CanUse(out act, CanUseOption.SkipClippingCheck)) ||
+            DivineBenisonPvE.CanUse(out act) ||
+            TetragrammatonPvE.CanUse(out act) ||
             base.HealSingleAbility(out act);
 
+        [RotationDesc(ActionID.AsylumPvE)]
+        protected override bool HealAreaAbility(out IAction? act)
+        {
+            if (!IsMoving && NumberOfAllHostilesInRange >= AsylumThreshold && AsylumPvE.CanUse(out act, CanUseOption.SkipClippingCheck))
+            {
+                return true;
+            }
+            else
+            {
+                return base.HealAreaAbility(out act);
+            }
+        }
 
-        [RotationDesc(ActionID.Asylum)]
-        protected override bool HealAreaAbility(out IAction act) =>
-            (!IsMoving && NumberOfAllHostilesInRange >= Configs.GetInt("AsylumThreshold") && Asylum.CanUse(out act, CanUseOption.IgnoreClippingCheck)) ||
-            base.HealAreaAbility(out act);
-
-
-        [RotationDesc(ActionID.DivineBenison, ActionID.Aquaveil)]
-        protected override bool DefenseSingleAbility(out IAction act) =>
-            DivineBenison.CanUse(out act) ||
-            Aquaveil.CanUse(out act) ||
+        [RotationDesc(ActionID.DivineBenisonPvE, ActionID.AquaveilPvE)]
+        protected override bool DefenseSingleAbility(out IAction? act) =>
+            DivineBenisonPvE.CanUse(out act) && DivineBenisonPvE.Cooldown.WillHaveOneCharge(15) ||
+            AquaveilPvE.CanUse(out act) && AquaveilPvE.Cooldown.WillHaveOneCharge(52) ||
             base.DefenseSingleAbility(out act);
 
-
-        [RotationDesc(ActionID.Temperance, ActionID.LiturgyOfTheBell)]
-        protected override bool DefenseAreaAbility(out IAction act)
+        [RotationDesc(ActionID.TemperancePvE, ActionID.LiturgyOfTheBellPvE)]
+        protected override bool DefenseAreaAbility(out IAction? act)
         {
-            if (IsInHighEndDuty && Temperance.CanUse(out act) && LiturgyOfTheBell.CanUse(out _))
+            // Check if Temperance and LiturgyOfTheBell are on cooldown and have enough charges
+            bool temperanceOnCooldown = TemperancePvE.Cooldown.IsCoolingDown && !TemperancePvE.Cooldown.WillHaveOneCharge(100);
+            bool liturgyOnCooldown = LiturgyOfTheBellPvE.Cooldown.IsCoolingDown && !LiturgyOfTheBellPvE.Cooldown.WillHaveOneCharge(160);
+
+            // If either ability is on cooldown, return false
+            if (temperanceOnCooldown || liturgyOnCooldown)
             {
-                // Prioritize Temperance in high-end duties
-                act = Temperance;
-                return true;
+                act = null; // Assign a default null value here
+                return false;
             }
-            else if (Temperance.CanUse(out act))
-            {
-                // Prioritize Temperance outside of high-end duties (or if Liturgy is not available)
-                return true;
-            }
-            else if (LiturgyOfTheBell.CanUse(out act))
+
+            // Try to use Temperance first
+            if (TemperancePvE.CanUse(out act))
             {
                 return true;
             }
 
-            // Fallback to other defensive area abilities
+            // If Temperance cannot be used, try to use LiturgyOfTheBell
+            if (LiturgyOfTheBellPvE.CanUse(out act, skipAoeCheck: true))
+            {
+                return true;
+            }
+
+            // If neither ability can be used, call the base method
             return base.DefenseAreaAbility(out act);
         }
 
-
-        protected override bool EmergencyAbility(IAction nextGCD, out IAction act) =>
-            ((nextGCD is IBaseAction action && action.MPNeed >= 999 && ThinAir.CanUse(out act)) ||
-            (nextGCD.IsTheSameTo(true, AfflatusRapture, Medica, Medica2, Cure3) && PlenaryIndulgence.CanUse(out act))) ||
-            base.EmergencyAbility(nextGCD, out act);
+        protected override bool EmergencyAbility(IAction nextGCD, out IAction? act)
+        {
+            if (nextGCD is IBaseAction action && action.Info.MPNeed >= 1000 && ThinAirPvE.CanUse(out act))
+                return true;
+            if (nextGCD.IsTheSameTo(true, AfflatusRapturePvE, MedicaPvE, MedicaIiPvE, CureIiiPvE) &&
+                (MergedStatus.HasFlag(AutoStatus.HealAreaSpell) || MergedStatus.HasFlag(AutoStatus.HealSingleSpell)) &&
+                PlenaryIndulgencePvE.CanUse(out act))
+                return true;
+            return base.EmergencyAbility(nextGCD, out act);
+        }
 
         #endregion
-
     }
 }

@@ -1,61 +1,32 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.9.34622.214
+VisualStudioVersion = 17.8.34330.188
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MaruRotations", "MaruRotations.csproj", "{EFAF8257-EB86-423C-AD38-A8DFF65F405B}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RotationSolver.Basic", "RotationSolver\RotationSolver.Basic\RotationSolver.Basic.csproj", "{CE79DCDD-4B34-4477-B3E2-C72A5D159014}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ECommons", "RotationSolver\ECommons\ECommons\ECommons.csproj", "{09DDF009-A712-477E-9997-DF34A5CF3EDC}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "XIVPainter", "RotationSolver\XIVPainter\XIVPainter\XIVPainter.csproj", "{B5CFDD33-DA65-4227-94A8-2D5EAAB8AA59}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{1E218F01-7724-4A31-8627-ABF52FABC23F}"
+	ProjectSection(SolutionItems) = preProject
+		.gitignore = .gitignore
+		Info.txt = Info.txt
+		README.md = README.md
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
-		Debug|Any CPU = Debug|Any CPU
 		Debug|x64 = Debug|x64
-		Release|Any CPU = Release|Any CPU
 		Release|x64 = Release|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{EFAF8257-EB86-423C-AD38-A8DFF65F405B}.Debug|Any CPU.ActiveCfg = Release|Any CPU
-		{EFAF8257-EB86-423C-AD38-A8DFF65F405B}.Debug|Any CPU.Build.0 = Release|Any CPU
 		{EFAF8257-EB86-423C-AD38-A8DFF65F405B}.Debug|x64.ActiveCfg = Debug|Any CPU
 		{EFAF8257-EB86-423C-AD38-A8DFF65F405B}.Debug|x64.Build.0 = Debug|Any CPU
-		{EFAF8257-EB86-423C-AD38-A8DFF65F405B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{EFAF8257-EB86-423C-AD38-A8DFF65F405B}.Release|Any CPU.Build.0 = Release|Any CPU
-		{EFAF8257-EB86-423C-AD38-A8DFF65F405B}.Release|x64.ActiveCfg = Release|x64
-		{EFAF8257-EB86-423C-AD38-A8DFF65F405B}.Release|x64.Build.0 = Release|x64
-		{CE79DCDD-4B34-4477-B3E2-C72A5D159014}.Debug|Any CPU.ActiveCfg = Debug|x64
-		{CE79DCDD-4B34-4477-B3E2-C72A5D159014}.Debug|Any CPU.Build.0 = Debug|x64
-		{CE79DCDD-4B34-4477-B3E2-C72A5D159014}.Debug|x64.ActiveCfg = Debug|x64
-		{CE79DCDD-4B34-4477-B3E2-C72A5D159014}.Debug|x64.Build.0 = Debug|x64
-		{CE79DCDD-4B34-4477-B3E2-C72A5D159014}.Release|Any CPU.ActiveCfg = Release|x64
-		{CE79DCDD-4B34-4477-B3E2-C72A5D159014}.Release|Any CPU.Build.0 = Release|x64
-		{CE79DCDD-4B34-4477-B3E2-C72A5D159014}.Release|x64.ActiveCfg = Release|x64
-		{CE79DCDD-4B34-4477-B3E2-C72A5D159014}.Release|x64.Build.0 = Release|x64
-		{09DDF009-A712-477E-9997-DF34A5CF3EDC}.Debug|Any CPU.ActiveCfg = Debug|x64
-		{09DDF009-A712-477E-9997-DF34A5CF3EDC}.Debug|Any CPU.Build.0 = Debug|x64
-		{09DDF009-A712-477E-9997-DF34A5CF3EDC}.Debug|x64.ActiveCfg = Debug|x64
-		{09DDF009-A712-477E-9997-DF34A5CF3EDC}.Debug|x64.Build.0 = Debug|x64
-		{09DDF009-A712-477E-9997-DF34A5CF3EDC}.Release|Any CPU.ActiveCfg = Release|x64
-		{09DDF009-A712-477E-9997-DF34A5CF3EDC}.Release|Any CPU.Build.0 = Release|x64
-		{09DDF009-A712-477E-9997-DF34A5CF3EDC}.Release|x64.ActiveCfg = Release|x64
-		{09DDF009-A712-477E-9997-DF34A5CF3EDC}.Release|x64.Build.0 = Release|x64
-		{B5CFDD33-DA65-4227-94A8-2D5EAAB8AA59}.Debug|Any CPU.ActiveCfg = Debug|x64
-		{B5CFDD33-DA65-4227-94A8-2D5EAAB8AA59}.Debug|Any CPU.Build.0 = Debug|x64
-		{B5CFDD33-DA65-4227-94A8-2D5EAAB8AA59}.Debug|x64.ActiveCfg = Debug|x64
-		{B5CFDD33-DA65-4227-94A8-2D5EAAB8AA59}.Debug|x64.Build.0 = Debug|x64
-		{B5CFDD33-DA65-4227-94A8-2D5EAAB8AA59}.Release|Any CPU.ActiveCfg = Release|x64
-		{B5CFDD33-DA65-4227-94A8-2D5EAAB8AA59}.Release|Any CPU.Build.0 = Release|x64
-		{B5CFDD33-DA65-4227-94A8-2D5EAAB8AA59}.Release|x64.ActiveCfg = Release|x64
-		{B5CFDD33-DA65-4227-94A8-2D5EAAB8AA59}.Release|x64.Build.0 = Release|x64
+		{EFAF8257-EB86-423C-AD38-A8DFF65F405B}.Release|x64.ActiveCfg = Release|Any CPU
+		{EFAF8257-EB86-423C-AD38-A8DFF65F405B}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {F6D024E1-6E35-49C2-838E-77D1E122FFBD}
+		SolutionGuid = {47134325-72D1-43BB-BF01-EB072F6B3742}
 	EndGlobalSection
 EndGlobal
