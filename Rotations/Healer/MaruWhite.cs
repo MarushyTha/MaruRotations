@@ -46,28 +46,32 @@ namespace MaruRotations.Rotations.Healer
 
         private bool ShouldUseMedicaII(out IAction? act)
         {
-            // Calculate the threshold for Medica II based on the number of party members close by
+            // Calculate the average health of party members
+            float partyMembersAverageHealth = PartyMembersAverHP;
+
+            // Calculate the threshold for Medica II based on the number of party members within range
             int maxRange = 20;
-            int partyMembersWithinRange = PartyMembers.Count(member => member.DistanceToPlayer() < maxRange);
-            int medicaThreshold = partyMembersWithinRange / 2; // Dynamic threshold based on party size
+            int medicaThreshold = PartyMembers.Count(member => member.DistanceToPlayer() < maxRange) / 2; // Dynamic threshold based on party size
 
             // Check if Medica II can be used
             bool canUseMedicaII = MedicaIiPvE.CanUse(out act, skipClippingCheck: true);
 
             // Check if party health is below the threshold for Medica II
-            bool isPartyHealthBelowThreshold = PartyMembersAverHP < 0.75f;
+            bool isPartyHealthBelowThreshold = partyMembersAverageHealth < 0.75f;
 
             // Check if there are enough hostiles for Medica II
-            bool enoughHostilesForMedicaII = NumberOfAllHostilesInRange >= medicaThreshold;
+            int enemiesWithinRange = NumberOfAllHostilesInRange;
+            bool enoughHostilesForMedicaII = enemiesWithinRange >= medicaThreshold;
 
             // Check if there is a single hostile target (boss)
-            bool isBossTarget = HostileTarget.IsBossFromIcon();
+            bool isSingleBossTarget = NumberOfAllHostilesInRange == 1 && HostileTarget.IsBossFromIcon();
 
             // Use Medica II if:
             // 1. Party health is below threshold and enough hostiles are present and Medica II is usable
             // OR 2. We're fighting a boss (single target) and Medica II is usable
-            return (isPartyHealthBelowThreshold && enoughHostilesForMedicaII || isBossTarget) && canUseMedicaII;
+            return (isPartyHealthBelowThreshold && enoughHostilesForMedicaII) || (isSingleBossTarget && canUseMedicaII);
         }
+
 
         // Method to determine whether to use Holy ability
         private bool UseHoly(out IAction? act)
@@ -126,10 +130,10 @@ namespace MaruRotations.Rotations.Healer
                 if (UseLily(out act)) return true;
             }
 
-            // Check if Medica II should be used
-            if (ShouldUseMedicaII(out act) && MedicaIiPvE.CanUse(out act))
+            // Check if 2 or more party members have health below 70% and Medica II can be used
+            if (ShouldUseMedicaII(out act) && PartyMembersHP.Count(health => health < 0.7) >= 2 && MedicaIiPvE.CanUse(out act))
             {
-                return true;
+                return true; // Use Medica II if conditions are met
             }
 
             if (UseHoly(out act) && HolyPvE.CanUse(out act)) return true;
@@ -172,7 +176,7 @@ namespace MaruRotations.Rotations.Healer
             if (AfflatusRapturePvE.CanUse(out act)) return true;
 
             // Check if Medica II should be used
-            if (ShouldUseMedicaII(out act) && MedicaIiPvE.CanUse(out act))
+            if (ShouldUseMedicaII(out act))
             {
                 return true;
             }
