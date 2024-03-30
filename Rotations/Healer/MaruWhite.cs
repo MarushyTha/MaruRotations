@@ -97,41 +97,38 @@ namespace MaruRotations.Rotations.Healer
         // Override method for general GCD actions
         protected override bool GeneralGCD(out IAction? act)
         {
-            // Check if Afflatus Misery can be used and use it if possible
-            if (AfflatusMiseryPvE.CanUse(out act, skipAoeCheck: true))
-                return true;
-
             // Check if Lily conditions are met
             bool liliesNearlyFull = Lily == 2 && LilyTime > 13;
             bool liliesFullNoBlood = Lily == 3 && BloodLily < 3;
 
-            if (UseLilyWhenFull && ((liliesNearlyFull || liliesFullNoBlood) && NumberOfAllHostilesInRange >= 2 || HostileTarget.IsBossFromIcon() && AfflatusMiseryPvE.EnoughLevel && BloodLily < 3))
+            // Check if Afflatus Misery can be used and use it if possible
+            if (AfflatusMiseryPvE.CanUse(out act, skipAoeCheck: true))
+                return true;
+
+            // Determine if Afflatus Solace should be used
+            bool shouldUseAfflatusSolace = BloodLily < 3 || (BloodLily >= 3 && LilyTime < 13);
+
+            // Use Afflatus Solace if conditions are met
+            if (shouldUseAfflatusSolace && AfflatusSolacePvE.CanUse(out act))
+                return true;
+
+            // Check for AoE Lily usage
+            if ((liliesNearlyFull || liliesFullNoBlood) && UseLily(out act, true))
+                return true;
+
+            // Check if 3 or more party members have health below 70% and Medica II can be used
+            if (PartyMembersHP.Count(health => health < 0.7) >= 3 && MedicaIiPvE.CanUse(out act))
             {
-                // Prioritize single-target Lily usage (Afflatus Solace)
-                if (UseLily(out act, false))
-                    return true;
-
-                // AoE Logic (including bosses)
-                if (NumberOfAllHostilesInRange >= 2 || HostileTarget.IsBossFromIcon())
-                {
-                    if (UseLily(out act, true))
-                        return true;
-                }
-
-                // Check if 3 or more party members have health below 70% and Medica II can be used
-                if (PartyMembersHP.Count(health => health < 0.7) >= 3 && MedicaIiPvE.CanUse(out act))
-                {
-                    return true; // Use Medica II if conditions are met
-                }
-
-                // Prioritize healing with Cure II if party health is low
-                if (PartyMembersAverHP < 0.7 && CureIiPvE.CanUse(out act))
-                    return true;
-
-                // Check for single-target Lily usage (Afflatus Solace)
-                if (UseLily(out act, false))
-                    return true;
+                return true; // Use Medica II if conditions are met
             }
+
+            // Prioritize healing with Cure II if party health is low
+            if (PartyMembersAverHP < 0.7 && CureIiPvE.CanUse(out act))
+                return true;
+
+            // Check for single-target Lily usage (Afflatus Solace)
+            if (UseLily(out act, false))
+                    return true;
 
             // AoE damage (Holy)
             if (HolyPvE.CanUse(out _))
@@ -184,8 +181,10 @@ namespace MaruRotations.Rotations.Healer
             // Calculate the average health of party members
             float partyMembersAverageHealth = PartyMembersAverHP;
 
-            // Calculate the threshold for Medica II based on the number of party members
-            int medicaThreshold = PartyMembers.Where(o => o.DistanceToPlayer() < 20).Count() / 2; // Dynamic threshold based on party size
+            // Calculate the threshold for Medica II based on the number of party members close by
+            int maxRange = 20;
+            int partyMembersWithinRange = PartyMembers.Count(member => member.DistanceToPlayer() < maxRange);
+            int medicaThreshold = partyMembersWithinRange / 2; // Dynamic threshold based on party size
 
             // Check if Medica II can be used
             bool canUseMedicaII = MedicaIiPvE.CanUse(out act, skipClippingCheck: true);
