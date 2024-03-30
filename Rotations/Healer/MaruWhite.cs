@@ -209,6 +209,12 @@ namespace MaruRotations.Rotations.Healer
                 return true;
             }
 
+            // Check if Medica II should be used
+            if (ShouldUseMedicaII(out act))
+            {
+                return true;
+            }
+
             // If neither Medica II nor AoE Lily is usable, use other healing spells
             return CureIiiPvE.CanUse(out act) ||
                    MedicaPvE.CanUse(out act) ||
