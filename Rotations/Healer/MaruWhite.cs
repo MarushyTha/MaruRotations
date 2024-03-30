@@ -197,12 +197,12 @@ namespace MaruRotations.Rotations.Healer
             bool enoughHostilesForMedicaII = NumberOfAllHostilesInRange >= medicaThreshold;
 
             // Check if there is a single hostile target (boss)
-            bool isSingleBossTarget = NumberOfAllHostilesInRange == 1 && HostileTarget.IsBossFromIcon();
+            bool isBossTarget = HostileTarget.IsBossFromIcon();
 
             // Use Medica II if:
             // 1. Party health is below threshold and enough hostiles are present and Medica II is usable
             // OR 2. We're fighting a boss (single target) and Medica II is usable
-            if ((isPartyHealthBelowThreshold && enoughHostilesForMedicaII || isSingleBossTarget) && canUseMedicaII)
+            if ((isPartyHealthBelowThreshold && enoughHostilesForMedicaII || isBossTarget) && canUseMedicaII)
             {
                 return true;
             }
