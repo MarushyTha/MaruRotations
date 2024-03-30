@@ -36,6 +36,12 @@ namespace MaruRotations.Rotations.Healer
 
         #region Helpers
 
+        // Helper method to check if Lily stacks are nearly full
+        private static bool IsLiliesNearlyFull() => Lily == 2 && LilyTime > 13;
+
+        // Helper method to check if Lily stacks are full but Blood Lily is not
+        private static bool IsLiliesFullNoBlood() => Lily == 3 && BloodLily < 3;
+
         // Method to determine whether to use Lily ability
         private bool UseLily(out IAction? act, bool useAoE)
         {
@@ -49,6 +55,31 @@ namespace MaruRotations.Rotations.Healer
             // If no Lily ability is usable, assign a default null value
             act = null;
             return false;
+        }
+
+        private bool ShouldUseMedicaII(out IAction? act)
+        {
+            // Calculate the threshold for Medica II based on the number of party members close by
+            int maxRange = 20;
+            int partyMembersWithinRange = PartyMembers.Count(member => member.DistanceToPlayer() < maxRange);
+            int medicaThreshold = partyMembersWithinRange / 2; // Dynamic threshold based on party size
+
+            // Check if Medica II can be used
+            bool canUseMedicaII = MedicaIiPvE.CanUse(out act, skipClippingCheck: true);
+
+            // Check if party health is below the threshold for Medica II
+            bool isPartyHealthBelowThreshold = PartyMembersAverHP < 0.75f;
+
+            // Check if there are enough hostiles for Medica II
+            bool enoughHostilesForMedicaII = NumberOfAllHostilesInRange >= medicaThreshold;
+
+            // Check if there is a single hostile target (boss)
+            bool isBossTarget = HostileTarget.IsBossFromIcon();
+
+            // Use Medica II if:
+            // 1. Party health is below threshold and enough hostiles are present and Medica II is usable
+            // OR 2. We're fighting a boss (single target) and Medica II is usable
+            return (isPartyHealthBelowThreshold && enoughHostilesForMedicaII || isBossTarget) && canUseMedicaII;
         }
 
         // Method to determine whether to use Holy ability
@@ -94,32 +125,29 @@ namespace MaruRotations.Rotations.Healer
 
         #region GCD Logic
 
-        // Override method for general GCD actions
         protected override bool GeneralGCD(out IAction? act)
         {
-            // Check if Lily conditions are met
-            bool liliesNearlyFull = Lily == 2 && LilyTime > 13;
-            bool liliesFullNoBlood = Lily == 3 && BloodLily < 3;
-
-            // Check if Afflatus Misery can be used and use it if possible
-            if (AfflatusMiseryPvE.CanUse(out act, skipAoeCheck: true))
-                return true;
-
-            // Determine if Afflatus Solace should be used
             bool shouldUseAfflatusSolace = BloodLily < 3 || (BloodLily >= 3 && LilyTime < 13);
 
-            // Use Afflatus Solace if conditions are met
-            if (shouldUseAfflatusSolace && AfflatusSolacePvE.CanUse(out act))
-                return true;
+            if (shouldUseAfflatusSolace)
+            {
+                // Prioritize healing party members with Afflatus Solace
+                foreach (var member in PartyMembers)
+                {
+                    // Check if the party member needs healing
+                    if (member.GetHealthRatio() < 0.7 && AfflatusSolacePvE.CanUse(out act, member))
+                        return true;
+                }
+            }
 
             // Check for AoE Lily usage
-            if ((liliesNearlyFull || liliesFullNoBlood) && UseLily(out act, true))
+            if ((IsLiliesNearlyFull() || IsLiliesFullNoBlood()) && UseLily(out act, true))
                 return true;
 
-            // Check if 3 or more party members have health below 70% and Medica II can be used
-            if (PartyMembersHP.Count(health => health < 0.7) >= 3 && MedicaIiPvE.CanUse(out act))
+            // Check if Medica II should be used
+            if (ShouldUseMedicaII(out act))
             {
-                return true; // Use Medica II if conditions are met
+                return true;
             }
 
             // Prioritize healing with Cure II if party health is low
@@ -128,7 +156,7 @@ namespace MaruRotations.Rotations.Healer
 
             // Check for single-target Lily usage (Afflatus Solace)
             if (UseLily(out act, false))
-                    return true;
+                return true;
 
             // AoE damage (Holy)
             if (HolyPvE.CanUse(out _))
@@ -174,42 +202,9 @@ namespace MaruRotations.Rotations.Healer
         [RotationDesc(ActionID.AfflatusRapturePvE, ActionID.MedicaIiPvE, ActionID.CureIiiPvE, ActionID.MedicaPvE)]
         protected override bool HealAreaGCD(out IAction? act)
         {
-            // Declare and initialize variables
-            bool liliesNearlyFull = Lily == 2 && LilyTime > 13;
-            bool liliesFullNoBlood = Lily == 3 && BloodLily < 3;
-
-            // Calculate the average health of party members
-            float partyMembersAverageHealth = PartyMembersAverHP;
-
-            // Calculate the threshold for Medica II based on the number of party members close by
-            int maxRange = 20;
-            int partyMembersWithinRange = PartyMembers.Count(member => member.DistanceToPlayer() < maxRange);
-            int medicaThreshold = partyMembersWithinRange / 2; // Dynamic threshold based on party size
-
-            // Check if Medica II can be used
-            bool canUseMedicaII = MedicaIiPvE.CanUse(out act, skipClippingCheck: true);
-
-            // Check if party health is below the threshold for Medica II
-            bool isPartyHealthBelowThreshold = partyMembersAverageHealth < 0.75f;
-
-            // Check if there are enough hostiles for Medica II
-            bool enoughHostilesForMedicaII = NumberOfAllHostilesInRange >= medicaThreshold;
-
-            // Check if there is a single hostile target (boss)
-            bool isBossTarget = HostileTarget.IsBossFromIcon();
-
-            // Use Medica II if:
-            // 1. Party health is below threshold and enough hostiles are present and Medica II is usable
-            // OR 2. We're fighting a boss (single target) and Medica II is usable
-            if ((isPartyHealthBelowThreshold && enoughHostilesForMedicaII || isBossTarget) && canUseMedicaII)
-            {
-                return true;
-            }
-
-
 
             // Check for AoE Lily usage
-            if ((liliesNearlyFull || liliesFullNoBlood) && UseLily(out act, true))
+            if ((Lily == 2 && LilyTime > 13 || Lily == 3 && BloodLily < 3) && UseLily(out act, true))
             {
                 return true;
             }
