@@ -132,7 +132,6 @@ namespace MaruRotations.Rotations.Healer
 
         protected override bool GeneralGCD(out IAction? act)
         {
-
             if (ShouldUseAfflatus(out act))
             {
                 // Prioritize Afflatus Solace for single-target healing
@@ -150,6 +149,10 @@ namespace MaruRotations.Rotations.Healer
 
             // Check if 3 stacks of Blood Lily are available and use Misery
             if (BloodLily == 3 && AfflatusMiseryPvE.CanUse(out act))
+                return true;
+
+            // Check if Lily stacks are full but Blood Lily is not
+            if (IsLiliesFullNoBlood() && AfflatusMiseryPvE.CanUse(out act))
                 return true;
 
             // Check if 3 or more party members have health below 70% and Medica II can be used
@@ -197,11 +200,8 @@ namespace MaruRotations.Rotations.Healer
             {
                 return true;
             }
-
-            if (ShouldUseAfflatus(out act))
+            if (ShouldUseAfflatus(out act) && AfflatusSolacePvE.CanUse(out act))
             {
-                // Prioritize Afflatus Solace for single-target healing
-                if (AfflatusSolacePvE.CanUse(out act))
                     return true;
             }
 
@@ -214,7 +214,6 @@ namespace MaruRotations.Rotations.Healer
         [RotationDesc(ActionID.AfflatusRapturePvE, ActionID.MedicaIiPvE, ActionID.CureIiiPvE, ActionID.MedicaPvE)]
         protected override bool HealAreaGCD(out IAction? act)
         {
-
             if (ShouldUseAfflatus(out act) && AfflatusRapturePvE.CanUse(out act, skipAoeCheck: true))
             {
                 return true;
