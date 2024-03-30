@@ -69,38 +69,6 @@ namespace MaruRotations.Rotations.Healer
             return (isPartyHealthBelowThreshold && enoughHostilesForMedicaII || isBossTarget) && canUseMedicaII;
         }
 
-        private bool ShouldUseAssize(out IAction? act)
-        {
-            // Calculate the threshold for Assize based on the number of party members and enemies
-            int maxRange = 15; // Maximum range for party members and enemies
-            int partyMembersWithinRange = CountPartyMembersWithinRange(maxRange);
-            int enemiesWithinRange = CountEnemiesWithinRange();
-            int assizeThreshold = 2; // Dynamic threshold based on party size
-
-            // Check if Assize can be used
-            bool canUseAssize = AssizePvE.CanUse(out act, skipAoeCheck: true);
-
-            // Check if there are enough enemies for Assize
-            bool enoughEnemiesForAssize = enemiesWithinRange >= assizeThreshold;
-
-            // Use Assize if:
-            // 1. There are enough enemies within range and Assize is usable
-            return enoughEnemiesForAssize && canUseAssize;
-        }
-
-        // Method to count party members within range
-        private static int CountPartyMembersWithinRange(int maxRange)
-        {
-            return PartyMembers.Count(member => member.DistanceToPlayer() < maxRange);
-        }
-
-        // Method to count enemies within range
-        private static int CountEnemiesWithinRange()
-        {
-            return NumberOfAllHostilesInMaxRange;
-        }
-
-
         // Method to determine whether to use Holy ability
         private bool UseHoly(out IAction? act)
         {
@@ -221,7 +189,7 @@ namespace MaruRotations.Rotations.Healer
 
         [RotationDesc(ActionID.PresenceOfMindPvE, ActionID.AssizePvE)]
         protected override bool AttackAbility(out IAction? act) =>
-            InCombat && (PresenceOfMindPvE.CanUse(out act) || (ShouldUseAssize(out act) && AssizePvE.CanUse(out act, CanUseOption.SkipClippingCheck))) ||
+            InCombat && (PresenceOfMindPvE.CanUse(out act) || (HasHostilesInMaxRange && AssizePvE.CanUse(out act, CanUseOption.SkipClippingCheck))) ||
             base.AttackAbility(out act);
 
         [RotationDesc(ActionID.BenedictionPvE, ActionID.AsylumPvE, ActionID.DivineBenisonPvE, ActionID.TetragrammatonPvE)]
