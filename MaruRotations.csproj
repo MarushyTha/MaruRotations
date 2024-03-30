@@ -2,9 +2,7 @@
 	<PropertyGroup>
 		<TargetFramework>net8.0-windows</TargetFramework>
 		<DalamudLibPath>$(AppData)\XIVLauncher\addon\Hooks\dev\</DalamudLibPath>
-		<AssemblyVersion>1.0.*</AssemblyVersion>
-		<GenerateAssemblyFileVersionAttribute>false</GenerateAssemblyFileVersionAttribute>
-		<Deterministic>false</Deterministic>
+		<AssemblyVersion>1.0.0.1</AssemblyVersion>
 </PropertyGroup>
 
 	<!-- Add package reference to RotationSolver.Basic -->

@@ -185,7 +185,7 @@ namespace MaruRotations.Rotations.Healer
             float partyMembersAverageHealth = PartyMembersAverHP;
 
             // Calculate the threshold for Medica II based on the number of party members
-            int medicaThreshold = PartyMembers.Count() / 2; // Dynamic threshold based on party size
+            int medicaThreshold = PartyMembers.Where(o => o.DistanceToPlayer() < 20).Count() / 2; // Dynamic threshold based on party size
 
             // Check if Medica II can be used
             bool canUseMedicaII = MedicaIiPvE.CanUse(out act, skipClippingCheck: true);
