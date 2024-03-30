@@ -37,7 +37,12 @@ namespace MaruRotations.Rotations.Healer
         #region Helpers
 
         // Helper method to check if Lily stacks are nearly full
-        private static bool IsLiliesNearlyFull() => Lily == 2 && LilyTime > 13;
+        private static bool ShouldUseAfflatus(out IAction? act)
+        {
+            // Set act to null since it's not being used within this method
+            act = null;
+            return Lily >= 2 && LilyTime > 13;
+        }
 
         // Helper method to check if Lily stacks are full but Blood Lily is not
         private static bool IsLiliesFullNoBlood() => Lily == 3 && BloodLily < 3;
@@ -127,28 +132,29 @@ namespace MaruRotations.Rotations.Healer
 
         protected override bool GeneralGCD(out IAction? act)
         {
-            bool shouldUseAfflatusSolace = BloodLily < 3 || (BloodLily >= 3 && LilyTime < 13);
 
-            if (shouldUseAfflatusSolace)
+            if (ShouldUseAfflatus(out act))
             {
-                // Prioritize healing party members with Afflatus Solace
-                foreach (var member in PartyMembers)
-                {
-                    // Check if the party member needs healing
-                    if (member.GetHealthRatio() < 0.7 && AfflatusSolacePvE.CanUse(out act, member))
-                        return true;
-                }
+                // Prioritize Afflatus Solace for single-target healing
+                if (AfflatusSolacePvE.CanUse(out act))
+                    return true;
+
+                // Prioritize Afflatus Rapture for AoE healing
+                if (AfflatusRapturePvE.CanUse(out act, skipAoeCheck: true))
+                    return true;
             }
 
             // Check for AoE Lily usage
-            if ((IsLiliesNearlyFull() || IsLiliesFullNoBlood()) && UseLily(out act, true))
+            if (UseLily(out act, true))
                 return true;
 
-            // Check if Medica II should be used
-            if (ShouldUseMedicaII(out act))
-            {
+            // Check if 3 stacks of Blood Lily are available and use Misery
+            if (BloodLily == 3 && AfflatusMiseryPvE.CanUse(out act))
                 return true;
-            }
+
+            // Check if 3 or more party members have health below 70% and Medica II can be used
+            if (PartyMembersHP.Count(health => health < 0.7) >= 3 && MedicaIiPvE.CanUse(out act))
+                return true;
 
             // Prioritize healing with Cure II if party health is low
             if (PartyMembersAverHP < 0.7 && CureIiPvE.CanUse(out act))
@@ -192,9 +198,15 @@ namespace MaruRotations.Rotations.Healer
                 return true;
             }
 
+            if (ShouldUseAfflatus(out act))
+            {
+                // Prioritize Afflatus Solace for single-target healing
+                if (AfflatusSolacePvE.CanUse(out act))
+                    return true;
+            }
+
             // Prioritize other healing abilities 
-            return AfflatusSolacePvE.CanUse(out act) ||
-                   CureIiPvE.CanUse(out act) ||
+            return CureIiPvE.CanUse(out act) ||
                    CurePvE.CanUse(out act) ||
                    base.HealSingleGCD(out act);
         }
@@ -203,8 +215,7 @@ namespace MaruRotations.Rotations.Healer
         protected override bool HealAreaGCD(out IAction? act)
         {
 
-            // Check for AoE Lily usage
-            if ((Lily == 2 && LilyTime > 13 || Lily == 3 && BloodLily < 3) && UseLily(out act, true))
+            if (ShouldUseAfflatus(out act) && AfflatusRapturePvE.CanUse(out act, skipAoeCheck: true))
             {
                 return true;
             }
