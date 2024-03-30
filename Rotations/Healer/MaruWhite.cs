@@ -36,31 +36,13 @@ namespace MaruRotations.Rotations.Healer
 
         #region Helpers
 
-        // Helper method to check if Lily stacks are nearly full
-        private static bool ShouldUseAfflatus(out IAction? act)
+        private bool UseLily(out IAction? act)
         {
-            // Set act to null since it's not being used within this method
-            act = null;
-            return Lily >= 2 && LilyTime > 13;
-        }
-
-        // Helper method to check if Lily stacks are full but Blood Lily is not
-        private static bool IsLiliesFullNoBlood() => Lily == 3 && BloodLily < 3;
-
-        // Method to determine whether to use Lily ability
-        private bool UseLily(out IAction? act, bool useAoE)
-        {
-
-            // Use Lily based on AoE flag
-            if (useAoE && AfflatusRapturePvE.CanUse(out act, skipAoeCheck: true))
-                return true;
-            else if (AfflatusSolacePvE.CanUse(out act))
-                return true;
-
-            // If no Lily ability is usable, assign a default null value
-            act = null;
+            if (AfflatusRapturePvE.CanUse(out act, skipAoeCheck: true)) return true;
+            if (AfflatusSolacePvE.CanUse(out act)) return true;
             return false;
         }
+
 
         private bool ShouldUseMedicaII(out IAction? act)
         {
@@ -86,6 +68,38 @@ namespace MaruRotations.Rotations.Healer
             // OR 2. We're fighting a boss (single target) and Medica II is usable
             return (isPartyHealthBelowThreshold && enoughHostilesForMedicaII || isBossTarget) && canUseMedicaII;
         }
+
+        private bool ShouldUseAssize(out IAction? act)
+        {
+            // Calculate the threshold for Assize based on the number of party members and enemies
+            int maxRange = 15; // Maximum range for party members and enemies
+            int partyMembersWithinRange = CountPartyMembersWithinRange(maxRange);
+            int enemiesWithinRange = CountEnemiesWithinRange();
+            int assizeThreshold = 2; // Dynamic threshold based on party size
+
+            // Check if Assize can be used
+            bool canUseAssize = AssizePvE.CanUse(out act, skipAoeCheck: true);
+
+            // Check if there are enough enemies for Assize
+            bool enoughEnemiesForAssize = enemiesWithinRange >= assizeThreshold;
+
+            // Use Assize if:
+            // 1. There are enough enemies within range and Assize is usable
+            return enoughEnemiesForAssize && canUseAssize;
+        }
+
+        // Method to count party members within range
+        private static int CountPartyMembersWithinRange(int maxRange)
+        {
+            return PartyMembers.Count(member => member.DistanceToPlayer() < maxRange);
+        }
+
+        // Method to count enemies within range
+        private static int CountEnemiesWithinRange()
+        {
+            return NumberOfAllHostilesInMaxRange;
+        }
+
 
         // Method to determine whether to use Holy ability
         private bool UseHoly(out IAction? act)
@@ -132,61 +146,37 @@ namespace MaruRotations.Rotations.Healer
 
         protected override bool GeneralGCD(out IAction? act)
         {
-            if (ShouldUseAfflatus(out act))
-            {
-                // Prioritize Afflatus Solace for single-target healing
-                if (AfflatusSolacePvE.CanUse(out act))
-                    return true;
-
-                // Prioritize Afflatus Rapture for AoE healing
-                if (AfflatusRapturePvE.CanUse(out act, skipAoeCheck: true))
-                    return true;
-            }
-
-            // Check for AoE Lily usage
-            if (UseLily(out act, true))
-                return true;
-
-            // Check if 3 stacks of Blood Lily are available and use Misery
+            // Check if Afflatus Misery should be used first
             if (BloodLily == 3 && AfflatusMiseryPvE.CanUse(out act))
                 return true;
 
-            // Check if Lily stacks are full but Blood Lily is not
-            if (IsLiliesFullNoBlood() && AfflatusMiseryPvE.CanUse(out act))
-                return true;
-
-            // Check if 3 or more party members have health below 70% and Medica II can be used
-            if (PartyMembersHP.Count(health => health < 0.7) >= 3 && MedicaIiPvE.CanUse(out act))
-                return true;
-
-            // Prioritize healing with Cure II if party health is low
-            if (PartyMembersAverHP < 0.7 && CureIiPvE.CanUse(out act))
-                return true;
-
-            // Check for single-target Lily usage (Afflatus Solace)
-            if (UseLily(out act, false))
-                return true;
-
-            // AoE damage (Holy)
-            if (HolyPvE.CanUse(out _))
+            // Check if Lily and Blood Lily stacks allow for Lily usage
+            bool liliesNearlyFull = Lily == 2 && LilyTime > 13;
+            bool liliesFullNoBlood = Lily == 3;
+            if (UseLilyWhenFull && (liliesNearlyFull || liliesFullNoBlood) && AfflatusMiseryPvE.EnoughLevel && BloodLily < 3)
             {
-                if (UseHoly(out act))
-                    return true;
+                if (UseLily(out act)) return true;
             }
 
-            // Single-target DoT (Aero)
-            if (AeroPvE.CanUse(out act))
+            // Check if Medica II should be used
+            if (ShouldUseMedicaII(out act))
+            {
                 return true;
+            }
 
-            // Single-target damage (Stone)
-            if (StonePvE.CanUse(out act))
-                return true;
+            if (UseHoly(out act) && HolyPvE.CanUse(out act)) return true;
 
-            // Maintain DoT (Aero) even if already applied 
-            if (AeroPvE.CanUse(out act, skipStatusProvideCheck: true))
-                return true;
+            if (AeroPvE.CanUse(out act)) return true;
 
-            // If no action is taken, call the base method
+            if (StonePvE.CanUse(out act)) return true;
+
+            if (Lily >= 2)
+            {
+                if (UseLily(out act)) return true;
+            }
+
+            if (AeroPvE.CanUse(out act, skipStatusProvideCheck: true)) return true;
+
             return base.GeneralGCD(out act);
         }
 
@@ -200,13 +190,10 @@ namespace MaruRotations.Rotations.Healer
             {
                 return true;
             }
-            if (ShouldUseAfflatus(out act) && AfflatusSolacePvE.CanUse(out act))
-            {
-                    return true;
-            }
 
             // Prioritize other healing abilities 
-            return CureIiPvE.CanUse(out act) ||
+            return AfflatusSolacePvE.CanUse(out act) ||
+                   CureIiPvE.CanUse(out act) ||
                    CurePvE.CanUse(out act) ||
                    base.HealSingleGCD(out act);
         }
@@ -214,10 +201,7 @@ namespace MaruRotations.Rotations.Healer
         [RotationDesc(ActionID.AfflatusRapturePvE, ActionID.MedicaIiPvE, ActionID.CureIiiPvE, ActionID.MedicaPvE)]
         protected override bool HealAreaGCD(out IAction? act)
         {
-            if (ShouldUseAfflatus(out act) && AfflatusRapturePvE.CanUse(out act, skipAoeCheck: true))
-            {
-                return true;
-            }
+            if (AfflatusRapturePvE.CanUse(out act)) return true;
 
             // Check if Medica II should be used
             if (ShouldUseMedicaII(out act))
@@ -237,7 +221,7 @@ namespace MaruRotations.Rotations.Healer
 
         [RotationDesc(ActionID.PresenceOfMindPvE, ActionID.AssizePvE)]
         protected override bool AttackAbility(out IAction? act) =>
-            InCombat && (PresenceOfMindPvE.CanUse(out act) || (HasHostilesInMaxRange && AssizePvE.CanUse(out act, CanUseOption.SkipClippingCheck))) ||
+            InCombat && (PresenceOfMindPvE.CanUse(out act) || (ShouldUseAssize(out act) && AssizePvE.CanUse(out act, CanUseOption.SkipClippingCheck))) ||
             base.AttackAbility(out act);
 
         [RotationDesc(ActionID.BenedictionPvE, ActionID.AsylumPvE, ActionID.DivineBenisonPvE, ActionID.TetragrammatonPvE)]
