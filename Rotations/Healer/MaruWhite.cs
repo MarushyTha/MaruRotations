@@ -127,7 +127,7 @@ namespace MaruRotations.Rotations.Healer
             }
 
             // Check if Medica II should be used
-            if (ShouldUseMedicaII(out act))
+            if (ShouldUseMedicaII(out act) && MedicaIiPvE.CanUse(out act))
             {
                 return true;
             }
@@ -172,7 +172,7 @@ namespace MaruRotations.Rotations.Healer
             if (AfflatusRapturePvE.CanUse(out act)) return true;
 
             // Check if Medica II should be used
-            if (ShouldUseMedicaII(out act))
+            if (ShouldUseMedicaII(out act) && MedicaIiPvE.CanUse(out act))
             {
                 return true;
             }
