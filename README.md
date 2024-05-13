@@ -2,7 +2,7 @@
 
 Experimenting with rotations for Rotation Solver Reborn Plugin
 
-![Maru Icon](#)
+![Maru Icon](https://github.com/MarushyTha/MaruRotations/blob/425795b88a7b357450efa404c805aa8c7d39c4bb/marushyico.png?raw=true)
 
 ***
 **For [FFXIV Launcher](https://goatcorp.github.io/)**
