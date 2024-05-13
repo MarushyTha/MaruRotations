@@ -1,6 +1,9 @@
+# MaruRotations
+
 Experimenting with rotations for Rotation Solver Reborn Plugin
 
-# MaruRotations
+![Maru Icon](#)
+
 ***
 **For [FFXIV Launcher](https://goatcorp.github.io/)**
 
@@ -20,14 +23,18 @@ My rotations are based in **[LTS](https://github.com/FFXIV-CombatReborn/LTSDefau
 
 ***
 
-### **Download the latest version of MaruRotations:**
+## **Download the latest version of MaruRotations:**
 
 [MaruRotations.dll](https://github.com/MarushyTha/MaruRotations/releases/latest/download/MaruRotations.dll)
-```
+
+``` MD
 https://github.com/MarushyTha/MaruRotations/releases/latest/download/MaruRotations.dll
 ```
+
 [MaruRotations.pdb](https://github.com/MarushyTha/MaruRotations/releases/latest/download/MaruRotations.pdb)
-```
+
+``` MD
 https://github.com/MarushyTha/MaruRotations/releases/latest/download/MaruRotations.pdb
 ```
-#### **This is a learn-as-you-do project, I apologize in advance for any mistakes.**
+
+### **This is a learn-as-you-do project, I apologize in advance for any mistakes.**
