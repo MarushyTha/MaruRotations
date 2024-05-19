@@ -5,11 +5,11 @@ Experimenting with rotations for Rotation Solver Reborn Plugin
 ![Maru Icon](https://github.com/MarushyTha/MaruRotations/blob/425795b88a7b357450efa404c805aa8c7d39c4bb/marushyico.png?raw=true)
 
 ***
-**For [FFXIV Launcher](https://goatcorp.github.io/)**
+**For [XIVLauncher](https://goatcorp.github.io/)**
 
-**Plugin [Rotation Solver](https://github.com/FFXIV-CombatReborn/RotationSolverReborn)**
+**Plugin [Rotation Solver Reborn](https://github.com/FFXIV-CombatReborn/RotationSolverReborn)**
 
-My rotations are based in **[LTS](https://github.com/FFXIV-CombatReborn/LTSDefaults)** from Rotation Solver
+My rotations are based in **[LTS](https://github.com/FFXIV-CombatReborn/LTSDefaults)** from Rotation Solver Reborn
 
 |  | Class | Description |
 | --- | --- | --- |
